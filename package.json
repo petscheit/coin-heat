@@ -17,9 +17,7 @@
     "pug": "~2.0.0-beta11",
     "request": "^2.81.0",
     "request-promise": "^4.2.1",
-    "request-then": "^1.1.0",
     "serve-favicon": "~2.4.2",
-    "then-request": "^4.1.0",
     "underscore": "^1.8.3"
   }
 }
