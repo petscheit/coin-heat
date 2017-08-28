@@ -68,7 +68,10 @@ function reSync(){
                 return t.none("DELETE FROM website")
                 .then(() => {
                   return t.none("DELETE FROM explorer")
-                    .then(console.log("coins, ann, website & explorer tables dropped!!"))
+                    .then(() => {
+                      return t.none("DELETE FROM message_board")
+                        .then(console.log("coins, ann, website & explorer tables dropped!!"))
+                    })
                 })
               })
         })
