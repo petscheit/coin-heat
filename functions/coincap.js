@@ -2,15 +2,13 @@
 
 var request = require("request");
 var rp = require("request-promise")
-var pgp = require('pg-promise')(/*options*/)
-var db = pgp('postgres://postgres:root@localhost:5432/coinheat')
 var _ = require('underscore')
-var coin = require('../objects/coin')
+var cheerio = require('cheerio');
 var fs = require('fs')
 
 module.exports = {
   getMainData: function() {
-    getRequest('https://api.coinmarketcap.com/v1/ticker/?limit=100')
+    getRequest('https://api.coinmarketcap.com/v1/ticker/?limit=150')
         .then(
           function(data){
             return iterateObjects(data);
@@ -28,6 +26,10 @@ module.exports = {
 
   deleteCoins: function(){
     reSync();
+  },
+
+  getMeta: function(){
+    checkForCoinsWithoutMeta()
   }
 };
 
@@ -54,11 +56,26 @@ function iterateObjects(data){
 };
 
 const writeNewToDB = function(coin){
-  return db.none("INSERT INTO coins(id, name, symbol, rank, img_url) SELECT $1, $2, $3, $4, $5 WHERE NOT EXISTS(SELECT 1 FROM coins WHERE id = $1)", [coin.id, coin.name, coin.symbol, coin.rank, "https://files.coinmarketcap.com/static/img/coins/32x32/".concat(coin.id, ".png")])
+  return db.any("INSERT INTO coins(id, name, symbol, rank, img_url) SELECT $1, $2, $3, $4, $5 WHERE NOT EXISTS(SELECT 1 FROM coins WHERE id = $1)", [coin.id, coin.name, coin.symbol, coin.rank, "https://files.coinmarketcap.com/static/img/coins/32x32/".concat(coin.id, ".png")])
 };
 
 function reSync(){
-  db.none("DELETE FROM coins")
+  db.task(t => {
+    return t.none('DELETE FROM coins')
+        .then(() => {
+            return t.none("DELETE FROM announcement")
+              .then(() => {
+                return t.none("DELETE FROM website")
+                .then(() => {
+                  return t.none("DELETE FROM explorer")
+                    .then(console.log("coins, ann, website & explorer tables dropped!!"))
+                })
+              })
+        })
+})
+
+
+  db.task("DELETE FROM coins AND DELETE FROM announcement AND DELETE FROM website AND DELETE FROM explorer")
   .then(() => {
     console.log("DB Dropped!")
   })
@@ -69,10 +86,21 @@ function reSync(){
 }
 
 function checkForCoinsWithoutImg(){
-  db.any("select * from coins where has_img=false LIMIT 100")
+  db.any("select * from coins where has_img=false LIMIT 150")
     .then(function(data){
       console.log("Selected: ".concat(data.length))
       downloadImages(data, data.length)
+    })
+    .catch(function(error){
+      console.log(error)
+    })
+};
+
+function checkForCoinsWithoutMeta(){
+  db.any("select id from coins where has_meta=false LIMIT 150")
+    .then(function(data){
+      console.log("Selected: ".concat(data.length))
+      downloadMeta(data)
     })
     .catch(function(error){
       console.log(error)
@@ -89,6 +117,60 @@ fs.writeFileAsync = function(fname, data, options) {
             }
         });
     });
+}
+
+function downloadMeta(data){
+  var error_count = 0
+  console.log(data)
+  let promises = data.map(obj => {
+    let id = obj.id
+
+    let options = {
+      uri: "https://coinmarketcap.com/currencies/".concat(id),
+      transform: function (body) {
+          return cheerio.load(body);
+      }
+    };
+    return rp(options)
+    .then(function ($) {
+      console.log("reached parsing")
+      return { announcement: $('.bottom-margin-2x .list-unstyled a:contains("Announcement")').attr("href"),
+        explorer: $('.bottom-margin-2x .list-unstyled a:contains("Explorer")').attr("href"),
+        website: $('.bottom-margin-2x .list-unstyled a:contains("Website")').attr("href"),
+        id: id}
+    })
+    .then((data) => {
+      writeAnn(data)
+      return data
+    })
+    .then((data) => {
+      writeWebsite(data)
+      return data
+    })
+    .then((data) => {
+      writeExplorer(data)
+      return data
+    })
+    .then((data) => {
+      updateMetaTag(data.id)
+    })
+    .catch(function (err) {
+      error_count += 1
+      console.log(err)
+      console.log(error_count)
+      console.log(data)
+
+    });
+
+  })
+  return Promise.all(promises).then((results) => {
+      console.log("All done");
+    })
+    .catch((e) => {
+        console.log(e)
+    }).then(console.log(error_count));
+
+    console.log(error_count)
 }
 
 function downloadImages(data) {
@@ -121,3 +203,76 @@ function updateImgTag(id){
       console.log(error)
     })
 }
+
+function updateMetaTag(id){
+  db.any("UPDATE coins SET has_meta = true WHERE id=$1", id)
+    .then(data => {
+      console.log(id.concat(" has been updated!"))
+    })
+    .catch(function(error){
+      console.log(error)
+    })
+}
+
+function writeAnn(data){
+  db.none("INSERT INTO announcement(coin_id, url) SELECT $1, $2", [data.id, data.announcement])
+  .then(
+    // console.log("Ann added to DB!")
+  )
+  .catch(function (err) {
+      console.log(err)
+  });
+}
+
+function writeWebsite(data){
+  db.none("INSERT INTO website(coin_id, url) SELECT $1, $2", [data.id, data.website])
+  .then(
+    // console.log("Web added to DB!")
+  )
+  .catch(function (err) {
+      console.log(err)
+  });
+}
+
+function writeExplorer(data){
+  db.none("INSERT INTO explorer(coin_id, url) SELECT $1, $2", [data.id, data.explorer])
+  .then(
+    // console.log("Explorer added to DB!")
+  )
+  .catch(function (err) {
+      console.log(err)
+  });
+}
+
+// function getMetaData(id){
+//   var options = {
+//     uri: "https://coinmarketcap.com/currencies/".concat(id),
+//     transform: function (body) {
+//         return cheerio.load(body);
+//     }
+//   };
+//
+//   rp(options)
+//       .then(function ($) {
+//         console.log("reached blabla")
+//         return { announcement: $('.bottom-margin-2x .list-unstyled a:contains("Announcement")').attr("href"),
+//           explorer: $('.bottom-margin-2x .list-unstyled a:contains("Explorer")').attr("href"),
+//           website: $('.bottom-margin-2x .list-unstyled a:contains("Website")').attr("href"),
+//           id: id}
+//       })
+//       .then((data) => {
+//         writeAnn(data)
+//         return data
+//       })
+//       .then((data) => {
+//         writeWebsite(data)
+//         return data
+//       })
+//       .then((data) => {
+//         writeExplorer(data)
+//         return data
+//       })
+//       .catch(function (err) {
+//           console.log(err)
+//       });
+// }

@@ -1,6 +1,5 @@
 var express = require('express');
 var router = express.Router();
-var MongoClient = require('mongodb').MongoClient
 var coincap = require('../functions/coincap');
 
 
@@ -20,6 +19,10 @@ router.get('/del', function(req, res) {
 
 router.get('/img', function(req, res) {
   res.send(coincap.getCoinImages());
+})
+
+router.get('/meta', function(req, res) {
+  res.send(coincap.getMeta());
 })
 
 
