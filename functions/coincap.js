@@ -228,7 +228,7 @@ function writeAnn(data){
 
 function writeMessageBoard(data){
   if(data.message_board){
-    db.none("INSERT INTO message_board(coin_id, url) SELECT $1, $2", [data.id, data.announcement])
+    db.none("INSERT INTO message_board(coin_id, url) SELECT $1, $2", [data.id, data.message_board])
     .then(
       // console.log("Ann added to DB!")
     )
