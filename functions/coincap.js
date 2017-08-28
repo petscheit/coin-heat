@@ -136,7 +136,6 @@ function downloadMeta(data){
         website: $('.bottom-margin-2x .list-unstyled a:contains("Website")').attr("href"),
         message_board: $('.bottom-margin-2x .list-unstyled a:contains("Message Board")').attr("href"),
         id: id}
-      // console.log(data)
       return data
     })
     .then((data) => {
@@ -169,8 +168,6 @@ function downloadMeta(data){
         console.log("MetaData Download Error!!")
         console.log(e)
     })
-
-    console.log(error_count)
 }
 
 function downloadImages(data) {
@@ -261,36 +258,3 @@ function writeExplorer(data){
     });
   }
 }
-
-// function getMetaData(id){
-//   var options = {
-//     uri: "https://coinmarketcap.com/currencies/".concat(id),
-//     transform: function (body) {
-//         return cheerio.load(body);
-//     }
-//   };
-//
-//   rp(options)
-//       .then(function ($) {
-//         console.log("reached blabla")
-//         return { announcement: $('.bottom-margin-2x .list-unstyled a:contains("Announcement")').attr("href"),
-//           explorer: $('.bottom-margin-2x .list-unstyled a:contains("Explorer")').attr("href"),
-//           website: $('.bottom-margin-2x .list-unstyled a:contains("Website")').attr("href"),
-//           id: id}
-//       })
-//       .then((data) => {
-//         writeAnn(data)
-//         return data
-//       })
-//       .then((data) => {
-//         writeWebsite(data)
-//         return data
-//       })
-//       .then((data) => {
-//         writeExplorer(data)
-//         return data
-//       })
-//       .catch(function (err) {
-//           console.log(err)
-//       });
-// }
