@@ -8,7 +8,7 @@ var fs = require('fs')
 
 module.exports = {
   getMainData: function() {
-    getRequest('https://api.coinmarketcap.com/v1/ticker/?limit=150')
+    getRequest('https://api.coinmarketcap.com/v1/ticker/?limit=50')
         .then(
           function(data){
             return iterateObjects(data);
@@ -86,7 +86,7 @@ function reSync(){
 }
 
 function checkForCoinsWithoutImg(){
-  db.any("select * from coins where has_img=false LIMIT 150")
+  db.any("select * from coins where has_img=false LIMIT 50")
     .then(function(data){
       console.log("Selected: ".concat(data.length))
       downloadImages(data, data.length)
@@ -97,7 +97,7 @@ function checkForCoinsWithoutImg(){
 };
 
 function checkForCoinsWithoutMeta(){
-  db.any("select id from coins where has_meta=false LIMIT 150")
+  db.any("select id from coins where has_meta=false LIMIT 50")
     .then(function(data){
       console.log("Selected: ".concat(data.length))
       downloadMeta(data)
@@ -120,8 +120,6 @@ fs.writeFileAsync = function(fname, data, options) {
 }
 
 function downloadMeta(data){
-  var error_count = 0
-  console.log(data)
   let promises = data.map(obj => {
     let id = obj.id
 
@@ -133,11 +131,13 @@ function downloadMeta(data){
     };
     return rp(options)
     .then(function ($) {
-      console.log("reached parsing")
-      return { announcement: $('.bottom-margin-2x .list-unstyled a:contains("Announcement")').attr("href"),
+      var data = { announcement: $('.bottom-margin-2x .list-unstyled a:contains("Announcement")').attr("href"),
         explorer: $('.bottom-margin-2x .list-unstyled a:contains("Explorer")').attr("href"),
         website: $('.bottom-margin-2x .list-unstyled a:contains("Website")').attr("href"),
+        message_board: $('.bottom-margin-2x .list-unstyled a:contains("Message Board")').attr("href"),
         id: id}
+      // console.log(data)
+      return data
     })
     .then((data) => {
       writeAnn(data)
@@ -152,14 +152,13 @@ function downloadMeta(data){
       return data
     })
     .then((data) => {
-      updateMetaTag(data.id)
+      writeMessageBoard(data)
+    })
+    .then((data) => {
+      updateMetaTag(id)
     })
     .catch(function (err) {
-      error_count += 1
       console.log(err)
-      console.log(error_count)
-      console.log(data)
-
     });
 
   })
@@ -167,8 +166,9 @@ function downloadMeta(data){
       console.log("All done");
     })
     .catch((e) => {
+        console.log("MetaData Download Error!!")
         console.log(e)
-    }).then(console.log(error_count));
+    })
 
     console.log(error_count)
 }
@@ -215,33 +215,51 @@ function updateMetaTag(id){
 }
 
 function writeAnn(data){
-  db.none("INSERT INTO announcement(coin_id, url) SELECT $1, $2", [data.id, data.announcement])
-  .then(
-    // console.log("Ann added to DB!")
-  )
-  .catch(function (err) {
+  if(data.announcement){
+    db.none("INSERT INTO announcement(coin_id, url) SELECT $1, $2", [data.id, data.announcement])
+    .then(
+      // console.log("Ann added to DB!")
+    )
+    .catch(function (err) {
       console.log(err)
-  });
+    });
+  }
+}
+
+function writeMessageBoard(data){
+  if(data.message_board){
+    db.none("INSERT INTO message_board(coin_id, url) SELECT $1, $2", [data.id, data.announcement])
+    .then(
+      // console.log("Ann added to DB!")
+    )
+    .catch(function (err) {
+      console.log(err)
+    });
+  }
 }
 
 function writeWebsite(data){
-  db.none("INSERT INTO website(coin_id, url) SELECT $1, $2", [data.id, data.website])
-  .then(
-    // console.log("Web added to DB!")
-  )
-  .catch(function (err) {
+  if(data.website){
+    db.none("INSERT INTO website(coin_id, url) SELECT $1, $2", [data.id, data.website])
+    .then(
+      // console.log("Web added to DB!")
+    )
+    .catch(function (err) {
       console.log(err)
-  });
+    });
+  }
 }
 
 function writeExplorer(data){
-  db.none("INSERT INTO explorer(coin_id, url) SELECT $1, $2", [data.id, data.explorer])
-  .then(
-    // console.log("Explorer added to DB!")
-  )
-  .catch(function (err) {
+  if(data.explorer){
+    db.none("INSERT INTO explorer(coin_id, url) SELECT $1, $2", [data.id, data.explorer])
+    .then(
+      // console.log("Explorer added to DB!")
+    )
+    .catch(function (err) {
       console.log(err)
-  });
+    });
+  }
 }
 
 // function getMetaData(id){
