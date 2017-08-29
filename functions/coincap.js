@@ -89,7 +89,7 @@ function reSync(){
 }
 
 function checkForCoinsWithoutImg(){
-  db.any("select * from coins where has_img=false LIMIT 50")
+  db.any("SELECT * FROM coins WHERE has_img=false LIMIT 50")
     .then(function(data){
       console.log("Selected: ".concat(data.length))
       downloadImages(data, data.length)
@@ -100,7 +100,7 @@ function checkForCoinsWithoutImg(){
 };
 
 function checkForCoinsWithoutMeta(){
-  db.any("select id from coins where has_meta=false LIMIT 50")
+  db.any("SELECT id FROM coins WHERE has_meta=false LIMIT 50")
     .then(function(data){
       console.log("Selected: ".concat(data.length))
       downloadMeta(data)

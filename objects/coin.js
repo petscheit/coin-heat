@@ -2,15 +2,7 @@
 
 module.exports = {
   getAllCoins: function(req, res, next){
-    console.log("reached!")
-    db.any("SELECT * FROM coins")
-    .then(function (data) {
-      res.status(200)
-      .json({
-        status: 'success',
-        data: data
-      });
-    })
+    return db.any("SELECT * FROM coins ORDER BY rank")
     .catch(function (err) {
       return next(err);
     });
