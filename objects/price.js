@@ -8,17 +8,26 @@ var _ = require('underscore')
 
 //2419200000 <- 28 days in ms
 
-var j;
+var j = undefined;
 
 module.exports = {
-  coinCapAPI: function(){
-    console.log("Called at: " + new Date(Date.now()).toUTCString())
-    makeRequest();
-    scheduleApiRequests();
+  coinCapAPI: function(req, res, err){
+    if(req.params.id == "supersecurepassword" && j == undefined){
+      console.log("Called at: " + new Date(Date.now()).toUTCString())
+      makeRequest();
+      scheduleApiRequests();
+    } else {
+      console.log("Password incorrect or already running!!")
+    }
   },
 
-  stopRequest: function(){
-    stop();
+  stopRequest: function(req, res, err){
+    if(req.params.id == "supersecurepassword" && j != undefined){
+        stop();
+    } else {
+      console.log("password incorrect or nothing running!")
+    }
+
   }
   // ,
 
@@ -120,6 +129,7 @@ function scheduleApiRequests(){
 
 function stop(){
   j.cancel();
+  j = undefined;
 }
 
 function makeRequest(){

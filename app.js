@@ -54,6 +54,6 @@ app.on('listening', function () {
 });
 
 global.pgpp = pgp;
-global.db = pgp('postgres://paul:pass@localhost:5432/coinheat')
+global.db = pgp('postgres://postgres:root@localhost:5432/coinheat')
 
 module.exports = app;

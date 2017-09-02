@@ -1,2 +1,5 @@
 public/images
 node_modules
+app.js
+bin/www
+*.log

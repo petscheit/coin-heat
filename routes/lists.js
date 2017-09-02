@@ -33,12 +33,12 @@ var price = require('../objects/price')
 //   res.send(price.checkDiff("bitcoin"));
 // })
 
-router.get('/start', function(req, res) {
-  res.send(price.coinCapAPI());
+router.get('/start/:id', function(req, res, err) {
+  res.send(price.coinCapAPI(req, res, err));
 })
 
-router.get('/stop', function(req, res) {
-  res.send(price.stopRequest());
+router.get('/stop/:id', function(req, res, err) {
+  res.send(price.stopRequest(req, res, err));
 })
 
 // router.get('/del', function(req, res) {
