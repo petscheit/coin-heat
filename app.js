@@ -5,11 +5,13 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var pgp = require('pg-promise')(/*options*/)
+var helpers =  pgp.helpers
 
 var index = require('./routes/index');
 var users = require('./routes/users');
 var coins = require('./routes/coins');
-var lists = require('./routes/lists')
+var lists = require('./routes/lists');
+var prices = require('./routes/prices');
 var app = express();
 
 // view engine setup
@@ -28,7 +30,7 @@ app.use('/', index);
 app.use('/users', users);
 app.use('/lists', lists);
 app.use('/coins', coins);
-
+app.use('/prices', prices);
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   var err = new Error('Not Found');
@@ -47,7 +49,7 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-
-global.db = pgp('postgres://postgres:root@localhost:5432/coinheat')
+global.pgpp = pgp;
+global.db = pgp('postgres://postgres:coinheat_paul@localhost:5432/coin_heat_test')
 
 module.exports = app;

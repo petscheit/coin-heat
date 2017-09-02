@@ -8,7 +8,7 @@ var fs = require('fs')
 
 module.exports = {
   getMainData: function() {
-    getRequest('https://api.coinmarketcap.com/v1/ticker/?limit=50')
+    getRequest('https://api.coinmarketcap.com/v1/ticker/')
         .then(
           function(data){
             return iterateObjects(data);
@@ -30,7 +30,12 @@ module.exports = {
 
   getMeta: function(){
     checkForCoinsWithoutMeta()
+  },
+
+  delAllPrices: function(){
+    delPrices()
   }
+
 };
 
 var getRequest = function(url){
@@ -75,17 +80,11 @@ function reSync(){
                 })
               })
         })
-})
-
-
-  db.task("DELETE FROM coins AND DELETE FROM announcement AND DELETE FROM website AND DELETE FROM explorer")
-  .then(() => {
-    console.log("DB Dropped!")
   })
-  .catch(error => {
-    console.log("Error when writing too DB!")
-    console.log(error)
-  });
+}
+
+function delPrices(){
+  db.none("DELETE FROM prices")
 }
 
 function checkForCoinsWithoutImg(){

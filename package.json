@@ -11,14 +11,17 @@
     "cookie-parser": "~1.4.3",
     "debug": "~2.6.3",
     "express": "~4.15.2",
+    "highcharts": "^5.0.14",
     "mongod": "^2.0.0",
     "mongodb": "^2.2.31",
     "morgan": "~1.8.1",
+    "node-schedule": "^1.2.4",
     "pg-promise": "^6.5.1",
     "pug": "~2.0.0-beta11",
     "request": "^2.81.0",
     "request-promise": "^4.2.1",
     "serve-favicon": "~2.4.2",
+    "string-similarity": "^1.2.0",
     "underscore": "^1.8.3"
   }
 }
