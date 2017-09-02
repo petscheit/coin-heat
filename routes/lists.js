@@ -37,6 +37,10 @@ router.get('/start', function(req, res) {
   res.send(price.coinCapAPI());
 })
 
+router.get('/stop', function(req, res) {
+  res.send(price.stopRequest());
+})
+
 // router.get('/del', function(req, res) {
 //   res.send(coincap.deleteCoins());
 // })

@@ -8,54 +8,17 @@ var _ = require('underscore')
 
 //2419200000 <- 28 days in ms
 
+var j;
+
 module.exports = {
   coinCapAPI: function(){
-    var options = {
-      uri: "https://api.coinmarketcap.com/v1/ticker",
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36'
-      }
-    }
+    console.log("Called at: " + new Date(Date.now()).toUTCString())
+    makeRequest();
+    scheduleApiRequests();
+  },
 
-    rp(options)
-    .then(function(data){
-      console.log("received data")
-      return JSON.parse(data)
-    })
-    .then(res => {
-      console.log('reached')
-      var inserts = [];
-      for(var i = 0; i < res.length; i++){
-        console.log("Updated: " + res[i].id)
-        var obj = {coin_id: res[i].id,
-          rank: res[i].rank,
-          price_usd: res[i].price_usd,
-          price_btc: res[i].price_btc,
-          volume_usd: res[i]['24h_volume_usd'],
-          marketcap_usd: res[i].market_cap_usd,
-          avail_supply: res[i].available_supply,
-          total_supply: res[i].total_supply,
-          percent_change_1h: res[i]['percent_change_1h'],
-          percent_change_24h: res[i]['percent_change_24h'],
-          percent_change_7d: res[i]['percent_change_7d'],
-          last_updated: res.last_updated}
-          inserts.push(obj)
-        }
-      return inserts;
-    })
-    .then(inserts => {
-      var query = pgpp.helpers.insert(inserts, ['coin_id', 'rank', 'price_usd', 'price_btc', 'volume_usd', 'marketcap_usd', 'avail_supply', 'total_supply', 'percent_change_1h', 'percent_change_24h', 'percent_change_7d', 'last_updated'], 'coincap')
-      db.none(query)
-        .then(() => {
-            console.log("All records added!")
-        })
-        .catch(error => {
-            console.log(error)
-        });
-    })
-    .catch(function(error){
-      console.log(error)
-    })
+  stopRequest: function(){
+    stop();
   }
   // ,
 
@@ -147,6 +110,67 @@ module.exports = {
   //
 
 }
+
+function scheduleApiRequests(){
+  j = schedule.scheduleJob("*/5 * * * *", function() {
+        console.log("Called at: " + new Date(Date.now()).toUTCString())
+        makeRequest();
+  });
+}
+
+function stop(){
+  j.cancel();
+}
+
+function makeRequest(){
+  var options = {
+    uri: "https://api.coinmarketcap.com/v1/ticker",
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36'
+    }
+  }
+
+  rp(options)
+  .then(function(data){
+    console.log("received data")
+    return JSON.parse(data)
+  })
+  .then(res => {
+    console.log('reached')
+    var inserts = [];
+    for(var i = 0; i < res.length; i++){
+      var obj = {coin_id: res[i].id,
+        rank: res[i].rank,
+        price_usd: res[i].price_usd,
+        price_btc: res[i].price_btc,
+        volume_usd: res[i]['24h_volume_usd'],
+        marketcap_usd: res[i].market_cap_usd,
+        avail_supply: res[i].available_supply,
+        total_supply: res[i].total_supply,
+        percent_change_1h: res[i]['percent_change_1h'],
+        percent_change_24h: res[i]['percent_change_24h'],
+        percent_change_7d: res[i]['percent_change_7d'],
+        last_updated: res[i].last_updated}
+        inserts.push(obj)
+      }
+    return inserts;
+  })
+  .then(inserts => {
+    var query = pgpp.helpers.insert(inserts, ['coin_id', 'rank', 'price_usd', 'price_btc', 'volume_usd', 'marketcap_usd', 'avail_supply', 'total_supply', 'percent_change_1h', 'percent_change_24h', 'percent_change_7d', 'last_updated'], 'coincap')
+    db.none(query)
+      .then(() => {
+          console.log("All records added!")
+      })
+      .catch(error => {
+          console.log(error)
+      });
+  })
+  .catch(function(error){
+    console.log(error)
+  })
+}
+
+
 //
 //
 // function getCCData(){

@@ -49,7 +49,11 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
+app.on('listening', function () {
+    console.log('Startinggg......')
+});
+
 global.pgpp = pgp;
-global.db = pgp('postgres://postgres:coinheat_paul@localhost:5432/coin_heat_test')
+global.db = pgp('postgres://paul:pass@localhost:5432/coinheat')
 
 module.exports = app;
